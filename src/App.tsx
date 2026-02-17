@@ -20,6 +20,9 @@ const App = () => {
   const [targetAuthorId, setTargetAuthorId] = useState<string>('');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [pageNum, setPageNum] = useState<number>(1);
+  const [hasMore, setHasMore] = useState<boolean>(false);
   
   const [wpAuth, setWpAuth] = useState<{username: string, appPassword: string} | null>(null);
   const [showAuthFields, setShowAuthFields] = useState(false);
@@ -122,30 +125,31 @@ const App = () => {
     }
   };
 
-  const loadPosts = async () => {
+  const loadPosts = async (reset: boolean = true) => {
     setLoadingPosts(true);
-    setPosts([]); 
-    setSelectedIds(new Set());
+    const nextPage = reset ? 1 : pageNum + 1;
+    
+    if (reset) {
+      setPosts([]);
+      setSelectedIds(new Set());
+      setPageNum(1);
+    }
+
     try {
-      let allPosts: WPPost[] = [];
-      let currentPage = 1;
-      let totalPages = 1;
       const authorId = authorFilter === 'all' ? undefined : parseInt(authorFilter);
-
-      do {
-        setStatus(`Loading page ${currentPage} of ${totalPages || '...'}`);
-        const result = await fetchWPPosts(currentPage, authorId, wpAuth || undefined);
-        allPosts = [...allPosts, ...result.posts];
-        totalPages = result.totalPages;
-        currentPage++;
-      } while (currentPage <= totalPages);
-
-      setPosts(allPosts);
-      setStatus(`Successfully loaded ${allPosts.length} posts.`);
+      setStatus(`Loading results...`);
+      const result = await fetchWPPosts(nextPage, authorId, wpAuth || undefined, searchQuery);
+      
+      const newPosts = reset ? result.posts : [...posts, ...result.posts];
+      setPosts(newPosts);
+      setPageNum(nextPage);
+      setHasMore(nextPage < result.totalPages);
+      
+      setStatus(`Loaded ${newPosts.length} posts. ${nextPage < result.totalPages ? 'More available.' : 'All caught up.'}`);
       setTimeout(() => setStatus(''), 3000);
     } catch (error) {
       console.error('Failed to load posts', error);
-      setStatus('Error loading posts for selected author.');
+      setStatus('Error loading posts. Check connection or search query.');
     } finally {
       setLoadingPosts(false);
     }
@@ -442,6 +446,17 @@ const App = () => {
             )}
 
             <div className="flex flex-wrap items-center gap-3 bg-neutral-800/50 p-2 rounded-2xl border border-neutral-700/50">
+              <div className="relative group">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && loadPosts(true)}
+                  placeholder="Search posts..."
+                  className="bg-neutral-800 border border-neutral-700 text-neutral-200 py-2 px-4 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-emerald-500/50 transition-all font-medium text-sm w-48 group-hover:border-emerald-500/30"
+                />
+              </div>
+
               <div className="relative">
                 <select
                   value={authorFilter}
@@ -464,7 +479,6 @@ const App = () => {
                   className="bg-neutral-800 border border-neutral-700 text-neutral-200 py-2 px-3 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500/50"
                   placeholder="Start"
                 />
-                <span className="text-neutral-500 text-xs font-bold">TO</span>
                 <input 
                   type="date" 
                   value={endDate}
@@ -475,11 +489,16 @@ const App = () => {
               </div>
 
               <button
-                onClick={loadPosts}
+                onClick={() => loadPosts(true)}
                 disabled={loadingPosts || loadingAuthors}
-                className="bg-emerald-600 hover:bg-emerald-500 disabled:bg-neutral-800 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-lg active:scale-95 cursor-pointer ml-2"
+                className="bg-emerald-600 hover:bg-emerald-500 disabled:bg-neutral-800 px-4 py-2 rounded-xl text-xs font-black transition-all shadow-lg active:scale-95 cursor-pointer flex items-center gap-2"
               >
-                {loadingPosts ? 'Loading...' : 'Load Posts'}
+                {loadingPosts && pageNum === 1 ? (
+                  <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                )}
+                Search / Load
               </button>
             </div>
 
@@ -641,6 +660,29 @@ const App = () => {
                 })}
               </tbody>
             </table>
+            {hasMore && (
+              <div className="p-6 text-center border-t border-neutral-800 bg-neutral-900/40">
+                <button
+                  onClick={() => loadPosts(false)}
+                  disabled={loadingPosts}
+                  className="inline-flex items-center gap-3 px-8 py-3 bg-neutral-800 hover:bg-neutral-700 text-white rounded-xl text-sm font-bold transition-all cursor-pointer border border-neutral-700 hover:border-blue-500/50 shadow-xl disabled:opacity-50"
+                >
+                  {loadingPosts ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                      Loading Page {pageNum + 1}...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"/></svg>
+                      Load More Posts
+                    </>
+                  )}
+                </button>
+                <p className="mt-2 text-[10px] font-bold text-neutral-600 tracking-wider">SHOWING {posts.length} POSTS</p>
+              </div>
+            )}
+            
             {filteredPosts.length === 0 && posts.length > 0 && (
               <div className="py-20 text-center bg-neutral-900/50">
                 <p className="text-neutral-500 text-sm font-bold uppercase tracking-widest text-[10px]">No matching results for active filters</p>

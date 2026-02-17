@@ -34,15 +34,18 @@ export const getAuthorName = (post: WPPost): string => {
   return `User ${post.author}`;
 };
 
-export const fetchWPPosts = async (page: number = 1, authorId?: number, auth?: WPAuth) => {
+export const fetchWPPosts = async (page: number = 1, authorId?: number, auth?: WPAuth, search?: string) => {
   try {
     const params: any = {
       page,
-      per_page: 100,
+      per_page: 20, // Smaller chunks for Load More
       _embed: 1,
     };
     if (authorId) {
       params.author = authorId;
+    }
+    if (search) {
+      params.search = search;
     }
 
     const headers: any = {};
