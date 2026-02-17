@@ -259,7 +259,7 @@ const App = () => {
           source: 'firestore',
           isOriginal: true,
           contentType: 'article',
-          status: 'published',
+          status: 'draft',
           createdAt: Date.now(),
           updatedAt: Date.now(),
           chapters: chapters
@@ -309,7 +309,7 @@ const App = () => {
             source: 'firestore',
             isOriginal: true,
             contentType: 'article',
-            status: 'published',
+            status: 'draft',
             createdAt: Date.now(),
             updatedAt: Date.now(),
             chapters: [
