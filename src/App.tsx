@@ -207,8 +207,10 @@ const App = () => {
 
     if (importMode === 'bundle' && selectedPosts.length > 0) {
       try {
-        const firstPost = selectedPosts[0];
-        setStatus(`Bundling ${selectedPosts.length} posts into: ${firstPost.title.rendered}...`);
+        // Reverse posts so that the oldest one (usually Chapter 1) comes first in the index
+        const chronologicalPosts = [...selectedPosts].reverse();
+        const firstPost = chronologicalPosts[0];
+        setStatus(`Bundling ${chronologicalPosts.length} posts into: ${firstPost.title.rendered}...`);
 
         const cleanTitle = DOMPurify.sanitize(firstPost.title.rendered, { ALLOWED_TAGS: [] });
         const doc = new DOMParser().parseFromString(cleanTitle, 'text/html');
@@ -224,7 +226,7 @@ const App = () => {
           }
         }
 
-        const chapters = selectedPosts.map((post, index) => {
+        const chapters = chronologicalPosts.map((post, index) => {
           const chCleanTitle = DOMPurify.sanitize(post.title.rendered, { ALLOWED_TAGS: [] });
           const chDoc = new DOMParser().parseFromString(chCleanTitle, 'text/html');
           const chFinalTitle = (chDoc.body.textContent || chCleanTitle).trim();
@@ -257,7 +259,7 @@ const App = () => {
           source: 'firestore',
           isOriginal: true,
           contentType: 'article',
-          status: 'draft',
+          status: 'published',
           createdAt: Date.now(),
           updatedAt: Date.now(),
           chapters: chapters
@@ -307,7 +309,7 @@ const App = () => {
             source: 'firestore',
             isOriginal: true,
             contentType: 'article',
-            status: 'draft',
+            status: 'published',
             createdAt: Date.now(),
             updatedAt: Date.now(),
             chapters: [
