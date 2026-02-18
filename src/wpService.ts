@@ -4,6 +4,7 @@ const WP_SITE_URL = import.meta.env.DEV ? '/wp-api' : 'https://public-api.wordpr
 
 export interface WPPost {
   id: number;
+  link: string;
   title: { rendered: string };
   content: { rendered: string };
   excerpt: { rendered: string };

@@ -594,6 +594,7 @@ const App = () => {
                   <th className="p-4 text-[10px] font-black text-neutral-400 uppercase tracking-widest border-b border-r border-neutral-700 text-left">Title</th>
                   <th className="p-4 text-[10px] font-black text-neutral-400 uppercase tracking-widest border-b border-r border-neutral-700 w-32 text-left">Author</th>
                   <th className="p-4 text-[10px] font-black text-neutral-400 uppercase tracking-widest border-b border-r border-neutral-700 w-28 text-left">Date</th>
+                  <th className="p-4 text-[10px] font-black text-neutral-400 uppercase tracking-widest border-b border-r border-neutral-700 w-20 text-center">Source</th>
                   <th className="p-4 text-[10px] font-black text-neutral-400 uppercase tracking-widest border-b border-neutral-700 text-left">Snippet</th>
                 </tr>
               </thead>
@@ -650,6 +651,19 @@ const App = () => {
                         <span className="text-[10px] font-mono text-neutral-500 whitespace-nowrap">
                           {new Date(post.date).toLocaleDateString('en-GB')}
                         </span>
+                      </td>
+                      <td className="p-4 border-b border-r border-neutral-800/20 text-center" onClick={(e) => e.stopPropagation()}>
+                        <a 
+                          href={post.link} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-400 hover:text-blue-300 transition-colors inline-block p-1"
+                          title="View on WordPress"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                        </a>
                       </td>
                       <td className="p-4 border-b border-neutral-800/20">
                         <div 
